@@ -7,11 +7,11 @@ from TTS.tts.models.xtts import Xtts
 
 # Set up the argument parser
 parser = argparse.ArgumentParser(description="TTS Generator with Command Line Arguments")
-parser.add_argument("--model_path", type=str, default="./xtts_v2/", help="Path to the TTS model directory")
+parser.add_argument("--model_path", type=str, default="./XTTS-v2/", help="Path to the TTS model directory")
 parser.add_argument("--speaker_wavs", nargs='+', default=["voice1.wav"], help="List of speaker WAV files for conditioning")
 parser.add_argument("--language", type=str, default="en", help="Language for the TTS model")
 parser.add_argument("--output_device", type=int, default=3, help="Output device ID for sound playback")
-parser.add_argument("--model_temperature", type=float, default=0.5, help="Temperature parameter for the TTS model")
+parser.add_argument("--model_temperature", type=float, default=0.65, help="Temperature parameter for the TTS model")
 
 # Parse the arguments
 args = parser.parse_args()

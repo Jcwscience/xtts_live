@@ -1,0 +1,4 @@
+TTS
+sounddevice
+librosa
+numpy
