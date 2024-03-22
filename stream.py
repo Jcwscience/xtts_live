@@ -12,6 +12,7 @@ parser.add_argument("--speaker_wavs", nargs='+', default=["voice1.wav"], help="L
 parser.add_argument("--language", type=str, default="en", help="Language for the TTS model")
 parser.add_argument("--output_device", type=int, default=3, help="Output device ID for sound playback")
 parser.add_argument("--model_temperature", type=float, default=0.65, help="Temperature parameter for the TTS model")
+parser.add_argument("--deepspeed", type=bool, default=False, help="Use DeepSpeed for model loading")
 
 # Parse the arguments
 args = parser.parse_args()
@@ -26,7 +27,7 @@ print("Loading model...")
 config = XttsConfig()
 config.load_json(model_path + "config.json")
 model = Xtts.init_from_config(config)
-model.load_checkpoint(config, checkpoint_dir=model_path, use_deepspeed=True)
+model.load_checkpoint(config, checkpoint_dir=model_path, use_deepspeed=args.deepspeed)
 model.cuda()
 
 class AudioBuffer:
