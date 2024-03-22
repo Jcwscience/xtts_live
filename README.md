@@ -21,9 +21,11 @@ You can run basic live inference from the command line. Here is an example:
 
 ### Aditional Options
 
+```bash
 --list_devices: List available audio devices
 --language: Language for the TTS model, Default="en"
 --enable_text_splitting: Use text splitting for long texts, Default=True
 --output_samplerate: Output samplerate for the audio stream, Default=48000
 --use_deepspeed: Use DeepSpeed for faster inference, Default=False
 --model_temperature: Temperature parameter for the TTS model, Default=0.65
+```
