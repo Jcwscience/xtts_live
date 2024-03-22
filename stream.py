@@ -1,14 +1,25 @@
 import numpy as np
 import librosa
 import sounddevice as sd
+import argparse  # Import the argparse library
 from TTS.tts.configs.xtts_config import XttsConfig
 from TTS.tts.models.xtts import Xtts
 
+# Set up the argument parser
+parser = argparse.ArgumentParser(description="TTS Generator with Command Line Arguments")
+parser.add_argument("--model_path", type=str, default="./xtts_v2/", help="Path to the TTS model directory")
+parser.add_argument("--speaker_wavs", nargs='+', default=["voice1.wav"], help="List of speaker WAV files for conditioning")
+parser.add_argument("--language", type=str, default="en", help="Language for the TTS model")
+parser.add_argument("--output_device", type=int, default=3, help="Output device ID for sound playback")
+parser.add_argument("--model_temperature", type=float, default=0.5, help="Temperature parameter for the TTS model")
 
-model_path = "./xtts_v2/"
-speaker_wavs = ["voice1.wav"]
-output_device = 3
+# Parse the arguments
+args = parser.parse_args()
 
+# Use the parsed arguments
+model_path = args.model_path
+speaker_wavs = args.speaker_wavs
+output_device = args.output_device
 
 # Load model
 print("Loading model...")
@@ -49,20 +60,17 @@ class AudioBuffer:
 
 audio_buffer = AudioBuffer()
 
-
 def stream_callback(outdata, frames, time, status):
     # Get samples from the buffer
     data = audio_buffer.get_samples(frames)
     if data is not None:
         outdata[:] = data
     else:
-        #End stream
+        # End stream
         sd.CallbackAbort
 
-
-def generate_speech(text, language="en", gpt_cond_latent=None, speaker_embedding=None):
-    
-    chunks = model.inference_stream(text, language, gpt_cond_latent, speaker_embedding, temperature=0.5, enable_text_splitting=True)
+def generate_speech(text, language=args.language, gpt_cond_latent=None, speaker_embedding=None):
+    chunks = model.inference_stream(text, language, gpt_cond_latent, speaker_embedding, temperature=args.model_temperature, enable_text_splitting=True)
     audio_buffer.keep_stream_open = True
     for chunk in chunks:
         # If the chunk is a tensor, convert it to a NumPy array and ensure it's a float32 array
@@ -73,20 +81,19 @@ def generate_speech(text, language="en", gpt_cond_latent=None, speaker_embedding
         audio_buffer.add_data(chunk)
     audio_buffer.keep_stream_open = False
 
-
 # Get conditioning latents
 print("Getting conditioning latents...")
 gpt_cond_latent, speaker_embedding = model.get_conditioning_latents(audio_path=speaker_wavs)
 
 # Start audio stream
-print ("Starting audio stream...")
+print("Starting audio stream...")
 stream = sd.OutputStream(samplerate=48000, channels=1, dtype=np.float32, device=output_device, blocksize=2048, callback=stream_callback)
 stream.start()
 
 try:
     while True:
         input_text = input("Enter text: ")
-        generate_speech(input_text, "en", gpt_cond_latent, speaker_embedding)
+        generate_speech(input_text, args.language, gpt_cond_latent, speaker_embedding)
 
 except KeyboardInterrupt:
     print("Stopping audio stream...")
