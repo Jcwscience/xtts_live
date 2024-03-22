@@ -16,12 +16,14 @@ Follow the instructions at https://huggingface.co/coqui/XTTS-v2 and specify the 
 You can run basic live inference from the command line. Here is an example:
 
 ```bash
-python3 stream.py --model_path "./XTTS-v2/" --speaker_wavs "voice.wav" --language "en" --output_device 0 --model_temperature 0.65
+./stream.py --model_path "./XTTS-v2/" --speaker_wavs "voice.wav" --output_device 0
 ```
 
-If you are unsure of your output device index you can run list_devices.py to see all available outputs.
+### Aditional Options
 
-If you have DeepSpeed installed use
-```bash
---deepspeed True
-```
+--list_devices: List available audio devices
+--language: Language for the TTS model, Default="en"
+--enable_text_splitting: Use text splitting for long texts, Default=True
+--output_samplerate: Output samplerate for the audio stream, Default=48000
+--use_deepspeed: Use DeepSpeed for faster inference, Default=False
+--model_temperature: Temperature parameter for the TTS model, Default=0.65
