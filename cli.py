@@ -49,7 +49,7 @@ tts.start()
 try:
     while True:
         input_text = input("Enter text: ")
-        tts.speak(input_text, language, model_temperature, enable_text_splitting)
+        tts.speak(input_text)
 
 except KeyboardInterrupt:
     tts.stop()

@@ -43,21 +43,19 @@ class TextToSpeechGenerator:
         self.audio_buffer = AudioBuffer()
         self.running = False
         self.thread = threading.Thread(target=self._process_queue)
-        config = XttsConfig()
-        config.load_json(model_path + "config.json")
-        model = Xtts.init_from_config(config)
-        model.load_checkpoint(config, checkpoint_dir=model_path, use_deepspeed=use_deepspeed)
-        if cpu_only:
-            self.model = model
-        else:
-            self.model = model.cuda()
-        self.gpt_cond_latent, self.speaker_embedding = model.get_conditioning_latents(audio_path=speaker_wavs)
+        self.config = XttsConfig()
+        self.config.load_json(model_path + "config.json")
+        self.model = Xtts.init_from_config(self.config)
+        self.model.load_checkpoint(self.config, checkpoint_dir=model_path, use_deepspeed=use_deepspeed)
+        if not cpu_only:
+            self.model.cuda()
+        self.gpt_cond_latent, self.speaker_embedding = self.model.get_conditioning_latents(audio_path=speaker_wavs)
 
 
     def _process_queue(self):
         while self.running:
             task = self.task_queue.get()
-            self._speak(task['text'], task['language'], task['gpt_cond_latent'], task['speaker_embedding'], task["speaker_wavs"], task['temperature'], task['enable_text_splitting'])
+            self._speak(task['text'], task['language'])
 
     def _stream_callback(self, outdata, frames, time, status):
         # Get samples from the buffer
@@ -68,8 +66,8 @@ class TextToSpeechGenerator:
             # End stream
             sd.CallbackAbort
 
-    def _speak(self, text, language, gpt_cond_latent, speaker_embedding, speaker_wavs, temperature, enable_text_splitting):
-        chunks = self.model.inference_stream(text, language, gpt_cond_latent, speaker_embedding, temperature, enable_text_splitting)
+    def _speak(self, text, language):
+        chunks = self.model.inference_stream(text=text, language=language, gpt_cond_latent=self.gpt_cond_latent, speaker_embedding=self.speaker_embedding, temperature=0.65, enable_text_splitting=True)
         self.audio_buffer.keep_stream_open = True
         for chunk in chunks:
             # If the chunk is a tensor, convert it to a NumPy array and ensure it's a float32 array
@@ -87,12 +85,11 @@ class TextToSpeechGenerator:
         self.thread.start()
         print("Audio stream started.")
 
-    def speak(self, text, language="en", speaker_wavs=None, temperature=0.65, enable_text_splitting=True):
-        self.task_queue.put({'text': text, 'language': language, 'gpt_cond_latent': self.gpt_cond_latent, 'speaker_embedding': self.speaker_embedding, 'speaker_wavs': speaker_wavs, 'temperature': temperature, 'enable_text_splitting': enable_text_splitting})
+    def speak(self, text, language="en"):
+        self.task_queue.put({'text': text, 'language': language})
 
     def stop(self):
         self.running = False
-        self.task_queue.put(None)
         self.stream.close()
         print("Stopping audio stream...")
         self.thread.join()
