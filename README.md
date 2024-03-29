@@ -3,7 +3,6 @@
 - numpy
 - librosa
 - sounddevice
-- argparse
 - TTS
 
 ## Getting The Model
@@ -13,19 +12,25 @@ Follow the instructions at https://huggingface.co/coqui/XTTS-v2 and specify the 
 
 ## Usage
 
-You can run basic live inference from the command line. Here is an example:
+1. Set the `model_path` variable to the path of your XTTS-v2 model.
+2. Set the `speaker_wavs` variable to the path of your speaker WAV files.
+3. Create an instance of `TextToSpeechGenerator` with the model path, speaker WAVs, and other optional parameters.
+4. Use the `speak` method of the TTS instance to generate speech from text.
 
-```bash
-./stream.py --model_path "./XTTS-v2/" --speaker_wavs "voice.wav" --output_device 0
-```
+Here is a basic example:
 
-### Aditional Options
+```python
+import sounddevice as sd
+from xtts_live.main import TextToSpeechGenerator
 
-```bash
---list_devices: List available audio devices
---language: Language for the TTS model, Default="en"
---enable_text_splitting: Use text splitting for long texts, Default=True
---output_samplerate: Output samplerate for the audio stream, Default=48000
---use_deepspeed: Use DeepSpeed for faster inference, Default=False
---model_temperature: Temperature parameter for the TTS model, Default=0.65
-```
+model_path = "/path/to/your/model"
+speaker_wavs = "/path/to/your/wavs"
+
+tts = TextToSpeechGenerator(model_path, speaker_wavs, output_device=3, use_deepspeed=False)
+
+try:
+    while True:
+        input_text = input("Enter text: ")
+        tts.speak(input_text)
+except KeyboardInterrupt:
+    tts.stop()
