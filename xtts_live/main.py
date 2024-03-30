@@ -30,7 +30,7 @@ class AudioBuffer:
         with self.lock:
             return len(self.buffer) == 0
 
-class TextToSpeechGenerator:
+class TextToSpeech:
     def __init__(self, model_path, speaker_wavs, output_device, low_latency=True, use_deepspeed=False, use_cuda=True, output_samplerate=48000):
         self.output_device = output_device
         self.samplerate = output_samplerate
@@ -82,8 +82,15 @@ class TextToSpeechGenerator:
         self.stream = sd.OutputStream(device=self.output_device, samplerate=self.samplerate, channels=1, dtype=np.float32, callback=self._stream_callback)
         self.stream.start()
 
-    def _speak(self, text, language):
-        chunks = self.model.inference_stream(text=text, language=language, gpt_cond_latent=self.gpt_cond_latent, speaker_embedding=self.speaker_embedding, temperature=0.65, enable_text_splitting=True)
+    def _speak(self, text, language, speaker_wav_paths):
+
+        if speaker_wav_paths:
+            gpt_cond_latent, speaker_embedding = self.model.get_conditioning_latents(audio_path=speaker_wav_paths)
+        else:
+            gpt_cond_latent=self.gpt_cond_latent
+            speaker_embedding=self.speaker_embedding
+
+        chunks = self.model.inference_stream(text=text, language=language, gpt_cond_latent=gpt_cond_latent, speaker_embedding=speaker_embedding, temperature=0.65, enable_text_splitting=True)
         for chunk in chunks:
             if hasattr(chunk, 'cpu'):
                 chunk = chunk.cpu().numpy()
@@ -91,12 +98,13 @@ class TextToSpeechGenerator:
             chunk = librosa.resample(chunk, orig_sr=24000, target_sr=self.samplerate)
             self.audio_buffer.add_data(chunk)
 
-    def speak(self, text, language="en"):
+    def speak(self, text, language="en", speaker_wav_paths=None):
         if not self.process_thread.is_alive():
             self.process_thread = threading.Thread(target=self._process_tasks)
             self.process_thread.start()
-        self.task_queue.put({'text': text, 'language': language})
 
+        self.task_queue.put({'text': text, 'language': language, 'speaker_wav_paths': speaker_wav_paths})
+        
     def stop(self):
         self.processing = False
         if self.stream:
