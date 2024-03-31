@@ -1,12 +1,10 @@
-import sounddevice as sd
-import os
-from xtts_live.main import TextToSpeechGenerator
+from xtts_live.main import TextToSpeech
 
 model_path = "/home/john/Documents/XTTS-v2/"
 speaker_wavs = "/home/john/Documents/Voices/voice.wav"
 
 
-tts = TextToSpeechGenerator(model_path, speaker_wavs, output_device=3, use_deepspeed=False)
+tts = TextToSpeech(model_path, speaker_wavs, output_device=3, use_deepspeed=False, debug=True)
 
 try:
     while True:
