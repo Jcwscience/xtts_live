@@ -28,6 +28,9 @@ TTS.speak("Text to be spoken.")
 
 # Read frames from the audio buffer
 TTS.audio_buffer.get_samples("Number of samples to retrieve")
+
+# Clean up the tts buffers and threads
+TTS.stop()
 ```
 
 See demo.py for example stream setup and integration.
