@@ -16,7 +16,7 @@ Follow the instructions at https://huggingface.co/coqui/XTTS-v2 and specify the 
 
 ## Usage
 
-'''python
+```python
 # Import the wrapper
 from xtts_live import TextToSpeech
 
@@ -28,6 +28,6 @@ TTS.speak("Text to be spoken.")
 
 # Read frames from the audio buffer
 TTS.audio_buffer.get_samples("Number of samples to retrieve")
-'''
+```
 
 See demo.py for example stream setup and integration.
