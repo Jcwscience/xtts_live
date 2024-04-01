@@ -137,7 +137,6 @@ class TextToSpeech:
         if self.debug: print("Adding task to queue")
         self.task_queue.put({'text': text, 'language': language, 'speaker_wav_paths': speaker_wav_paths, "temperature": temperature, "enable_text_splitting": enable_text_splitting})
         
-
     def stop(self):
         """
         Stops the queue manager and clears the audio buffer.
