@@ -1,4 +1,4 @@
-from xtts_live.main import TextToSpeech
+from xtts_live import TextToSpeech
 import sounddevice as sd
 
 

@@ -1,11 +1,9 @@
 import numpy as np
 import threading
 import librosa
-import pyaudio
 from TTS.tts.configs.xtts_config import XttsConfig
 from TTS.tts.models.xtts import Xtts
 from queue import Queue, Empty
-import time
 
 class AudioBuffer:
     def __init__(self):
@@ -38,6 +36,30 @@ class AudioBuffer:
             return len(self.buffer) == 0
 
 class TextToSpeech:
+    """
+    A class that provides text-to-speech functionality using a pre-trained model.
+
+    Args:
+        model_path (str): The path to the directory containing the model files.
+        speaker_wav_paths (str): The path to the directory containing the speaker's audio files.
+        samplerate (int, optional): The desired sample rate of the generated audio. Defaults to 48000.
+        use_deepspeed (bool, optional): Whether to use DeepSpeed for model loading. Defaults to False.
+        use_cuda (bool, optional): Whether to use CUDA for model inference. Defaults to True.
+        debug (bool, optional): Whether to enable debug mode. Defaults to False.
+
+    Attributes:
+        task_queue (Queue): A queue to store the text-to-speech tasks.
+        audio_buffer (AudioBuffer): An audio buffer to store the generated audio.
+        processing (bool): Whether the text-to-speech tasks are being processed.
+        process_thread (Thread): The thread for processing the text-to-speech tasks.
+
+    Methods:
+        speak(text, language="en", speaker_wav_paths=None, temperature=0.65, enable_text_splitting=True):
+            Adds a text-to-speech task to the queue for processing.
+        stop():
+            Stops the text-to-speech processing and clears the audio buffer.
+    """
+    
     def __init__(self, model_path, speaker_wav_paths, samplerate=48000, use_deepspeed=False, use_cuda=True, debug=False):
         # Initialize the TextToSpeech class
         self.model_path = model_path
@@ -98,6 +120,16 @@ class TextToSpeech:
             self.audio_buffer.add_data(chunk)
 
     def speak(self, text, language="en", speaker_wav_paths=None, temperature=0.65, enable_text_splitting=True):
+        """
+        Adds a text-to-speech task to the queue.
+
+        Args:
+            text (str): The text to be converted to speech.
+            language (str, optional): The language code for the text. Defaults to "en".
+            speaker_wav_paths (list, optional): List of paths to speaker-specific wave files. Defaults to None.
+            temperature (float, optional): The temperature parameter for controlling the randomness of the generated speech. Defaults to 0.65.
+            enable_text_splitting (bool, optional): Flag to enable text splitting for long texts. Defaults to True.
+        """
         if not self.process_thread.is_alive():
             if self.debug: print("Starting queue manager")
             self.process_thread = threading.Thread(target=self._process_tasks)
@@ -107,9 +139,19 @@ class TextToSpeech:
         
 
     def stop(self):
-        if self.debug: print("Stopping queue manager")
+        """
+        Stops the queue manager and clears the audio buffer.
+
+        This method sets the `processing` flag to False, puts a `None` value in the task queue to signal the end of processing,
+        joins the process thread to wait for it to finish, and clears the audio buffer. If the `debug` flag is set, it also
+        prints a message indicating that the queue manager has stopped.
+
+        """
+        if self.debug: 
+            print("Stopping queue manager")
         self.processing = False
         self.task_queue.put(None)
         self.process_thread.join()
         self.audio_buffer.clear()
-        if self.debug: print("Queue manager stopped")
+        if self.debug: 
+            print("Queue manager stopped")
