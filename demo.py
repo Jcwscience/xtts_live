@@ -5,9 +5,9 @@ import sounddevice as sd
 model_path = "/home/john/Documents/XTTS-v2/"
 speaker_wavs = "/home/john/Documents/Voices/voice.wav"
 
-samplerate = 48000
+output_samplerate = 48000
 
-tts = TextToSpeech(model_path, speaker_wavs, samplerate, use_deepspeed=True)
+tts = TextToSpeech(model_path, speaker_wavs, output_samplerate, use_deepspeed=True)
 
 def stream_callback(outdata, frames, time, status):
     if status:
@@ -16,7 +16,7 @@ def stream_callback(outdata, frames, time, status):
 
 stream = sd.OutputStream(
     device=3,
-    samplerate=samplerate,
+    samplerate=output_samplerate,
     channels=1,
     callback=stream_callback,
     finished_callback=tts.stop,
