@@ -10,7 +10,7 @@ import time
 class AudioBuffer:
     def __init__(self):
         self.buffer = np.array([], dtype=np.float32)
-        self.lock = threading.Lock()  # To ensure thread-safe operations on the buffer
+        self.lock = threading.Lock()
 
     def add_data(self, new_data):
         with self.lock:
@@ -19,68 +19,67 @@ class AudioBuffer:
     def get_samples(self, n_samples):
         with self.lock:
             if len(self.buffer) >= n_samples:
-                samples = self.buffer[:n_samples].reshape(-1, 1)
+                samples = self.buffer[:n_samples]
                 self.buffer = self.buffer[n_samples:]
+            elif len(self.buffer) > 0:
+                # Pad with zeros
+                samples = np.concatenate((self.buffer, np.zeros(n_samples - len(self.buffer), dtype=np.float32)))
             else:
-                samples = self.buffer.reshape(-1, 1)
-        return samples
+                samples = np.zeros(n_samples, dtype=np.float32)
+
+        return samples.reshape(-1, 1)
+    
+    def clear(self):
+        with self.lock:
+            self.buffer = np.array([], dtype=np.float32)
 
     def is_empty(self):
         with self.lock:
             return len(self.buffer) == 0
 
 class TextToSpeech:
-    def __init__(self, model_path, speaker_wav_paths, output_device, output_samplerate=48000, use_deepspeed=False, use_cuda=True, debug=False):
-        self.debug = debug
+    def __init__(self, model_path, speaker_wav_paths, samplerate=48000, use_deepspeed=False, use_cuda=True, debug=False):
+        # Initialize the TextToSpeech class
+        self.model_path = model_path
+        self.samplerate = samplerate
+        self.use_deepspeed = use_deepspeed
         self.use_cuda = use_cuda
-        self.speaker_wav_paths = speaker_wav_paths
-        self.output_device = output_device
-        self.samplerate = output_samplerate
+        self.debug = debug
         self.task_queue = Queue()
         self.audio_buffer = AudioBuffer()
         self.processing = False
 
-        # Load the TTS model
-        if self.debug:
-            print("Loading TTS model...")
-        self.config = XttsConfig()
-        self.config.load_json(model_path + "config.json")
-        self.model = Xtts.init_from_config(self.config)
-        self.model.load_checkpoint(self.config, checkpoint_dir=model_path, use_deepspeed=use_deepspeed)
-        if self.use_cuda:
-            self.model.cuda()
-        if self.debug:
-            print("Primimg speaker latents...")
-        self.gpt_cond_latent, self.speaker_embedding = self.model.get_conditioning_latents(audio_path=self.speaker_wav_paths)
-        if debug:
-            print("Opening audio stream...")
-        self.stream = pyaudio.PyAudio()
-        self.stream.open(output_device_index=self.output_device, channels=1 , format=pyaudio.paFloat32, output=True, rate=self.samplerate, frames_per_buffer=2048, start=False, stream_callback=self._stream_callback)
-        # Thread initialization
+        # Load the model
+        if self.debug: print("Loading model")
+        self._load_model()
+        self.gpt_cond_latent, self.speaker_embedding = self.model.get_conditioning_latents(audio_path=speaker_wav_paths)
+        if self.debug: print("Model loaded")
+
         self.process_thread = threading.Thread(target=self._process_tasks)
-        if self.debug:
-            print("TextToSpeech initialized.")
+
+
+    def _load_model(self):
+        config = XttsConfig()
+        config.load_json(self.model_path + "config.json")
+        model = Xtts.init_from_config(config)
+        model.load_checkpoint(config, checkpoint_dir=self.model_path, use_deepspeed=self.use_deepspeed)
+        if self.use_cuda:
+            model.cuda()
+        self.model = model
+
 
     def _process_tasks(self):
-            self.stream.start_stream()
             self.processing = True
+            try:
+                self.stream.start_stream()
+            except: pass
             while self.processing:
                 try:
                     task = self.task_queue.get(timeout=1)  # Adjust timeout as needed
                     self._speak(task['text'], task['language'], task['speaker_wav_paths'], task['temperature'], task['enable_text_splitting'])
                 except Empty:
                     self.processing = False
-
-
-    def _stream_callback(self, in_data, frame_count, time_info, status_flags):
-        if self.audio_buffer.is_empty():
-            if self.processing:
-                return b'\0' * frame_count * 1, pyaudio.paPrimingOutput
-            else:
-                return None, pyaudio.paComplete
-        else:
-            samples = self.audio_buffer.get_samples(frame_count)
-        return samples.tobytes(), pyaudio.paContinue
+        
 
     def _speak(self, text, language, speaker_wav_paths, temperature, enable_text_splitting):
 
@@ -100,16 +99,17 @@ class TextToSpeech:
 
     def speak(self, text, language="en", speaker_wav_paths=None, temperature=0.65, enable_text_splitting=True):
         if not self.process_thread.is_alive():
+            if self.debug: print("Starting queue manager")
             self.process_thread = threading.Thread(target=self._process_tasks)
             self.process_thread.start()
-
+        if self.debug: print("Adding task to queue")
         self.task_queue.put({'text': text, 'language': language, 'speaker_wav_paths': speaker_wav_paths, "temperature": temperature, "enable_text_splitting": enable_text_splitting})
         
+
     def stop(self):
+        if self.debug: print("Stopping queue manager")
         self.processing = False
-        self.stream.stop_stream()
-        self.stream.close()
-        self.stream.terminate()
+        self.task_queue.put(None)
         self.process_thread.join()
-        if self.debug:
-            print("Audio stream stopped.")
+        self.audio_buffer.clear()
+        if self.debug: print("Queue manager stopped")
