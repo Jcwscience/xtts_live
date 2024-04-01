@@ -15,7 +15,7 @@ def stream_callback(outdata, frames, time, status):
     outdata[:] = tts.audio_buffer.get_samples(frames)  # Fill the output audio buffer with samples from the TextToSpeech instance
 
 stream = sd.OutputStream(
-    device=3,  # Specify the audio output device index
+    device=20,  # Specify the audio output device index
     samplerate=output_samplerate,  # Set the sample rate for audio streaming
     channels=1,  # Set the number of audio channels
     callback=stream_callback,  # Set the callback function for audio streaming
@@ -27,8 +27,12 @@ stream.start()  # Start the audio streaming
 
 try:
     while True:
-        input_text = input("Enter text")  # Prompt the user to enter text
-        tts.speak(input_text)  # Use the TextToSpeech instance to speak the input text
+        input_text = input("Enter text: ")  # Prompt the user to enter text
+        language = input("Enter language (optional): ")
+        if language:
+            tts.speak(input_text, language=language)
+        else:
+            tts.speak(input_text)  # Use the TextToSpeech instance to speak the input text
 
 except KeyboardInterrupt:
     tts.stop()  # Stop the TextToSpeech instance
