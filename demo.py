@@ -6,13 +6,15 @@ speaker_wavs = "/home/john/Documents/Voices/voice.wav"  # Path to the speaker's 
 
 output_samplerate = 48000  # Output audio sample rate
 
-tts = TextToSpeech(model_path, speaker_wavs, output_samplerate, use_deepspeed=True)
+
+tts = TextToSpeech(model_path, speaker_wavs, output_samplerate, use_deepspeed=True, debug=False)
 # Create an instance of the TextToSpeech class with the specified model path, speaker audio path, output sample rate, and use_deepspeed flag
 
 def stream_callback(outdata, frames, time, status):
     if status:
         print(status)  # Print any status messages received during audio streaming
     outdata[:] = tts.audio_buffer.get_samples(frames)  # Fill the output audio buffer with samples from the TextToSpeech instance
+
 
 stream = sd.OutputStream(
     device=20,  # Specify the audio output device index
@@ -28,11 +30,10 @@ stream.start()  # Start the audio streaming
 try:
     while True:
         input_text = input("Enter text: ")  # Prompt the user to enter text
-        language = input("Enter language (optional): ")
-        if language:
-            tts.speak(input_text, language=language)
-        else:
-            tts.speak(input_text)  # Use the TextToSpeech instance to speak the input text
+        # If no language is specified, the language will be detected automatically
+        # If the language cannot be detected, the default language "en" will be used
+        # If something else goes wrong I have no idea what will happen
+        tts.speak(input_text) # Add the input text to the text-to-speech queue for processing
 
 except KeyboardInterrupt:
     tts.stop()  # Stop the TextToSpeech instance

@@ -2,3 +2,5 @@ TTS
 sounddevice
 librosa
 numpy
+langid
+mecab-python3
