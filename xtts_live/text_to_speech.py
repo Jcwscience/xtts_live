@@ -8,6 +8,7 @@ import langid
 import logging
 import warnings
 
+# What you don't know can't hurt you
 warnings.filterwarnings("ignore")
 
 # Stop deepstream from spewing out logs
@@ -18,7 +19,8 @@ logging.disable(50)
 logging.getLogger().setLevel(logging.ERROR)
 logging.getLogger("transformers.modeling_utils").setLevel(logging.ERROR)
 logging.getLogger("transformers.tokenization_utils").setLevel(logging.ERROR)
-
+# Gag torch too
+logging.getLogger("torch").setLevel(logging.ERROR)
 
 
 class AudioBuffer:
