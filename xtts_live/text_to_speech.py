@@ -6,6 +6,9 @@ from TTS.tts.models.xtts import Xtts
 from queue import Queue, Empty
 import langid
 import logging
+import warnings
+
+warnings.filterwarnings("ignore")
 
 # Stop deepstream from spewing out logs
 logging.getLogger("transformers.configuration_utils").setLevel(logging.ERROR)
