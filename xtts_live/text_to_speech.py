@@ -83,7 +83,8 @@ class TextToSpeech:
         self.task_queue = Queue()
         self.audio_buffer = AudioBuffer()
         self.processing = False
-        langid.set_languages(['en', 'es', 'fr', 'de', 'it', 'pt', 'pl', 'tr', 'ru', 'nl', 'cs', 'ar', 'zh', 'ja', 'hu', 'ko', 'hi'])
+        self.supported_languages = ['en', 'es', 'fr', 'de', 'it', 'pt', 'pl', 'tr', 'ru', 'nl', 'cs', 'ar', 'zh', 'ja', 'hu', 'ko', 'hi']
+        langid.set_languages(self.supported_languages)
 
         # Load the model
         if self.debug: print("Loading model")
