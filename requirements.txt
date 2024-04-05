@@ -3,4 +3,5 @@ sounddevice
 librosa
 numpy
 langid
+langcodes
 mecab-python3

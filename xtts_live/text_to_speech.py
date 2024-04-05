@@ -7,7 +7,9 @@ from queue import Queue, Empty
 import langid
 import logging
 import warnings
-from .helpers import Helpers
+from .helpers import Language
+
+language_codes = Language().supported_languages.items()
 
 # What you don't know can't hurt you
 warnings.filterwarnings("ignore")
@@ -84,8 +86,7 @@ class TextToSpeech:
         self.task_queue = Queue()
         self.audio_buffer = AudioBuffer()
         self.processing = False
-        self.supported_languages = Helpers().supported_languages
-        langid.set_languages(self.supported_languages)
+        langid.set_languages(language_codes)
 
         # Load the model
         if self.debug: print("Loading model")
