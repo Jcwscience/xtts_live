@@ -1,6 +1,6 @@
 class Helpers:
     def __init__(self):
-        self.supported_languages = ['en', 'es', 'fr', 'de', 'it', 'pt', 'pl', 'tr', 'ru', 'nl', 'cs', 'ar', 'zh', 'ja', 'hu', 'ko', 'hi']
+        self.supported_languages = ['en', 'es', 'fr', 'de', 'it', 'pt', 'pl', 'tr', 'ru', 'nl', 'cs', 'ar', 'zh', 'ja', 'hu', 'ko']
 
         self.language_code_conversion = {
             "en": "en_XX",
@@ -18,6 +18,5 @@ class Helpers:
             "zh": "zh_CN",
             "ja": "ja_XX",
             "hu": "hu_HU",
-            "ko": "ko_KR",
-            "hi": "hi_IN"
+            "ko": "ko_KR"
         }
