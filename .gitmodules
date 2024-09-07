@@ -1,6 +1,0 @@
-[submodule "coqui-ai-TTS"]
-	path = coqui-ai-TTS
-	url = https://github.com/idiap/coqui-ai-TTS
-[submodule "xtts_live/coqui-ai-TTS"]
-	path = xtts_live/coqui-ai-TTS
-	url = https://github.com/idiap/coqui-ai-TTS
