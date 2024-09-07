@@ -7,9 +7,8 @@ from queue import Queue, Empty
 import langid
 import logging
 import warnings
-from .helpers import Language
 
-language_codes = Language().supported_languages.items()
+language_codes = ["en","es","fr","de","it","pt","pl","tr","ru","nl","cs","ar","zh","ja","hu","ko"]
 
 # What you don't know can't hurt you
 warnings.filterwarnings("ignore")

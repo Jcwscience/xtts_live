@@ -1,7 +1,7 @@
 from xtts_live import TextToSpeech  # Import the TextToSpeech class from the xtts_live module
 import sounddevice as sd  # Import the sounddevice module for audio streaming
 
-model_path = "/home/john/Documents/XTTS-v2/"  # Path to the model directory
+model_path = "/home/john/.local/share/tts/tts_models--multilingual--multi-dataset--xtts_v2/"  # Path to the model directory
 speaker_wavs = "/home/john/Documents/Voices/voice.wav"  # Path to the speaker's audio file
 
 output_samplerate = 48000  # Output audio sample rate
@@ -17,7 +17,7 @@ def stream_callback(outdata, frames, time, status):
 
 
 stream = sd.OutputStream(
-    device=20,  # Specify the audio output device index
+    device=3,  # Specify the audio output device index
     samplerate=output_samplerate,  # Set the sample rate for audio streaming
     channels=1,  # Set the number of audio channels
     callback=stream_callback,  # Set the callback function for audio streaming
